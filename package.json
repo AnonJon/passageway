@@ -26,6 +26,7 @@
     "typescript": ">=4.5.0"
   },
   "dependencies": {
-    "@eth-optimism/sdk": "^1.8.0"
+    "@eth-optimism/sdk": "^1.8.0",
+    "dotenv": "^16.0.3"
   }
 }

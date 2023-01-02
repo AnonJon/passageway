@@ -1,9 +1,11 @@
 import { ethers } from "hardhat";
+import { CCM } from "../src/messanger";
 
-async function main() {}
+async function main() {
+  const ccm = CCM;
+  console.log(ccm.bridges[0]);
+}
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
