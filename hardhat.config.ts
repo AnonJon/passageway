@@ -4,10 +4,10 @@ import "@nomicfoundation/hardhat-toolbox";
 require("dotenv").config();
 
 const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL as string;
-const POLYGON_MUMBAI_RPC_URL = process.env.POLYGON_MUMBAI_RPC_URL as string;
+const OPTIMISM_GOERLI_RPC_URL = process.env.OPTIMISM_GOERLI_RPC_URL as string;
 const PRIVATE_KEY = (process.env.PRIVATE_KEY as string) || "0x";
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY as string;
-const POLYGONSCAN_KEY = process.env.POLYGONSCAN_KEY as string;
+const OP_ETHERSCAN_KEY = process.env.OP_ETHERSCAN_KEY as string;
 interface Config extends HardhatUserConfig {}
 
 const config: Config = {
@@ -42,10 +42,10 @@ const config: Config = {
       accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
       chainId: 5,
     },
-    mumbai: {
-      url: POLYGON_MUMBAI_RPC_URL,
+    "optimism-goerli": {
+      url: OPTIMISM_GOERLI_RPC_URL,
       accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-      chainId: 80001,
+      chainId: 420,
     },
     // binance: {
     //   url: BINANCE_MAINNET_RPC_URL,
@@ -55,7 +55,7 @@ const config: Config = {
   },
   etherscan: {
     apiKey: {
-      polygonMumbai: POLYGONSCAN_KEY,
+      optimisticGoerli: OP_ETHERSCAN_KEY,
       goerli: ETHERSCAN_KEY,
     },
   },

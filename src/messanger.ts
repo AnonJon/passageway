@@ -1,4 +1,4 @@
-import { CrossChainMessenger } from "@eth-optimism/sdk";
+import { CrossChainMessenger, MessageStatus } from "@eth-optimism/sdk";
 import { ethers } from "hardhat";
 require("dotenv").config();
 
@@ -20,9 +20,11 @@ const l2signer = new ethers.Wallet(pk, l2Provider);
 //     l2ChainId: 420,
 //   });
 // };
-export const CCM = new CrossChainMessenger({
+export const crossChainMessenger = new CrossChainMessenger({
   l1SignerOrProvider: l1signer,
   l2SignerOrProvider: l2signer,
   l1ChainId: 5,
   l2ChainId: 420,
 });
+
+export const messageStatus = MessageStatus;

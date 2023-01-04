@@ -5,6 +5,7 @@ coverage.json
 typechain
 typechain-types
 .envrc
+config/
 
 # Hardhat files
 cache
