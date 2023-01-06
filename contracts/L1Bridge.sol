@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {IL1StandardBridge} from "@eth-optimism/contracts/L1/messaging/IL1StandardBridge.sol";
+import {IL1ERC721Bridge} from "./interfaces/IL1ERC721Bridge.sol";
 import {IL1ERC20Bridge} from "@eth-optimism/contracts/L1/messaging/IL1ERC20Bridge.sol";
 import {IL2ERC20Bridge} from "@eth-optimism/contracts/L2/messaging/IL2ERC20Bridge.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {CrossDomainEnabled} from "@eth-optimism/contracts/libraries/bridge/CrossDomainEnabled.sol";
 import {Lib_PredeployAddresses} from "@eth-optimism/contracts/libraries/constants/Lib_PredeployAddresses.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /**
  * @title L1Bridge
  */
-contract L1Bridge is IL1StandardBridge, CrossDomainEnabled {
-    using SafeERC20 for IERC20;
-
+contract L1Bridge is IL1ERC721Bridge, ERC721Holder, CrossDomainEnabled {
     address public l2TokenBridge;
 
     // Maps L1 token to L2 token to balance of the L1 token deposited
@@ -45,75 +43,15 @@ contract L1Bridge is IL1StandardBridge, CrossDomainEnabled {
         _;
     }
 
-    /**
-     * @dev This function can be called with no data
-     * to deposit an amount of ETH to the caller's balance on L2.
-     * Since the receive function doesn't take data, a conservative
-     * default amount is forwarded to L2.
-     */
-    receive() external payable onlyEOA {
-        _initiateETHDeposit(msg.sender, msg.sender, 200_000, bytes(""));
-    }
-
-    /**
-     * @inheritdoc IL1StandardBridge
-     */
-    function depositETH(uint32 _l2Gas, bytes calldata _data) external payable onlyEOA {
-        _initiateETHDeposit(msg.sender, msg.sender, _l2Gas, _data);
-    }
-
-    /**
-     * @inheritdoc IL1StandardBridge
-     */
-    function depositETHTo(address _to, uint32 _l2Gas, bytes calldata _data) external payable {
-        _initiateETHDeposit(msg.sender, _to, _l2Gas, _data);
-    }
-
-    /**
-     * @dev Performs the logic for deposits by storing the ETH and informing the L2 ETH Gateway of
-     * the deposit.
-     * @param _from Account to pull the deposit from on L1.
-     * @param _to Account to give the deposit to on L2.
-     * @param _l2Gas Gas limit required to complete the deposit on L2.
-     * @param _data Optional data to forward to L2. This data is provided
-     *        solely as a convenience for external contracts. Aside from enforcing a maximum
-     *        length, these contracts provide no guarantees about its content.
-     */
-    function _initiateETHDeposit(address _from, address _to, uint32 _l2Gas, bytes memory _data) internal {
-        // Construct calldata for finalizeDeposit call
-        bytes memory message = abi.encodeWithSelector(
-            IL2ERC20Bridge.finalizeDeposit.selector,
-            address(0),
-            Lib_PredeployAddresses.OVM_ETH,
-            _from,
-            _to,
-            msg.value,
-            _data
-        );
-
-        // Send calldata into L2
-        // slither-disable-next-line reentrancy-events
-        sendCrossDomainMessage(l2TokenBridge, _l2Gas, message);
-
-        // slither-disable-next-line reentrancy-events
-        emit ETHDepositInitiated(_from, _to, msg.value, _data);
-    }
-
-    /**
-     * @inheritdoc IL1ERC20Bridge
-     */
-    function depositERC20(address _l1Token, address _l2Token, uint256 _amount, uint32 _l2Gas, bytes calldata _data)
+    function depositERC721(address _l1Token, address _l2Token, uint256 _amount, uint32 _l2Gas, bytes calldata _data)
         external
         virtual
         onlyEOA
     {
-        _initiateERC20Deposit(_l1Token, _l2Token, msg.sender, msg.sender, _amount, _l2Gas, _data);
+        _initiateERC721Deposit(_l1Token, _l2Token, msg.sender, msg.sender, _amount, _l2Gas, _data);
     }
 
-    /**
-     * @inheritdoc IL1ERC20Bridge
-     */
-    function depositERC20To(
+    function depositERC721To(
         address _l1Token,
         address _l2Token,
         address _to,
@@ -121,7 +59,7 @@ contract L1Bridge is IL1StandardBridge, CrossDomainEnabled {
         uint32 _l2Gas,
         bytes calldata _data
     ) external virtual {
-        _initiateERC20Deposit(_l1Token, _l2Token, msg.sender, _to, _amount, _l2Gas, _data);
+        _initiateERC721Deposit(_l1Token, _l2Token, msg.sender, _to, _amount, _l2Gas, _data);
     }
 
     /**
@@ -138,7 +76,7 @@ contract L1Bridge is IL1StandardBridge, CrossDomainEnabled {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function _initiateERC20Deposit(
+    function _initiateERC721Deposit(
         address _l1Token,
         address _l2Token,
         address _from,
@@ -151,14 +89,13 @@ contract L1Bridge is IL1StandardBridge, CrossDomainEnabled {
         // withdrawals. The use of safeTransferFrom enables support of "broken tokens" which do not
         // return a boolean value.
         // slither-disable-next-line reentrancy-events, reentrancy-benign
-        IERC20(_l1Token).safeTransferFrom(_from, address(this), _amount);
+        IERC721(_l1Token).safeTransferFrom(_from, address(this), _amount);
 
         // Construct calldata for _l2Token.finalizeDeposit(_to, _amount)
         bytes memory message = abi.encodeWithSelector(
             IL2ERC20Bridge.finalizeDeposit.selector, _l1Token, _l2Token, _from, _to, _amount, _data
         );
 
-        // Send calldata into L2
         // slither-disable-next-line reentrancy-events, reentrancy-benign
         sendCrossDomainMessage(l2TokenBridge, _l2Gas, message);
 
@@ -166,34 +103,10 @@ contract L1Bridge is IL1StandardBridge, CrossDomainEnabled {
         deposits[_l1Token][_l2Token] = deposits[_l1Token][_l2Token] + _amount;
 
         // slither-disable-next-line reentrancy-events
-        emit ERC20DepositInitiated(_l1Token, _l2Token, _from, _to, _amount, _data);
+        emit ERC721DepositInitiated(_l1Token, _l2Token, _from, _to, _amount, _data);
     }
 
-    /**
-     *
-     * Cross-chain Functions *
-     *
-     */
-
-    /**
-     * @inheritdoc IL1StandardBridge
-     */
-    function finalizeETHWithdrawal(address _from, address _to, uint256 _amount, bytes calldata _data)
-        external
-        onlyFromCrossDomainAccount(l2TokenBridge)
-    {
-        // slither-disable-next-line reentrancy-events
-        (bool success,) = _to.call{value: _amount}(new bytes(0));
-        require(success, "TransferHelper::safeTransferETH: ETH transfer failed");
-
-        // slither-disable-next-line reentrancy-events
-        emit ETHWithdrawalFinalized(_from, _to, _amount, _data);
-    }
-
-    /**
-     * @inheritdoc IL1ERC20Bridge
-     */
-    function finalizeERC20Withdrawal(
+    function finalizeERC721Withdrawal(
         address _l1Token,
         address _l2Token,
         address _from,
@@ -205,9 +118,9 @@ contract L1Bridge is IL1StandardBridge, CrossDomainEnabled {
 
         // When a withdrawal is finalized on L1, the L1 Bridge transfers the funds to the withdrawer
         // slither-disable-next-line reentrancy-events
-        IERC20(_l1Token).safeTransfer(_to, _amount);
+        IERC721(_l1Token).safeTransferFrom(_from, _to, _amount);
 
         // slither-disable-next-line reentrancy-events
-        emit ERC20WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);
+        emit ERC721WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);
     }
 }

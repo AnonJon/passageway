@@ -62,8 +62,6 @@ contract L2Bridge is IL2ERC20Bridge, CrossDomainEnabled {
         uint32 _l1Gas,
         bytes calldata _data
     ) internal {
-        // When a withdrawal is initiated, we burn the withdrawer's funds to prevent subsequent L2
-        // usage
         // slither-disable-next-line reentrancy-events
         IL2StandardERC20(_l2Token).burn(msg.sender, _amount);
 
@@ -81,7 +79,6 @@ contract L2Bridge is IL2ERC20Bridge, CrossDomainEnabled {
             );
         }
 
-        // Send message up to L1 bridge
         // slither-disable-next-line reentrancy-events
         sendCrossDomainMessage(l1TokenBridge, _l1Gas, message);
 
@@ -107,8 +104,6 @@ contract L2Bridge is IL2ERC20Bridge, CrossDomainEnabled {
                 // slither-disable-next-line reentrancy-events
                 .supportsInterface(_l2Token, 0x1d1d8b63) && _l1Token == IL2StandardERC20(_l2Token).l1Token()
         ) {
-            // When a deposit is finalized, we credit the account on L2 with the same amount of
-            // tokens.
             // slither-disable-next-line reentrancy-events
             IL2StandardERC20(_l2Token).mint(_to, _amount);
             // slither-disable-next-line reentrancy-events
@@ -132,7 +127,6 @@ contract L2Bridge is IL2ERC20Bridge, CrossDomainEnabled {
                 _data
             );
 
-            // Send message up to L1 bridge
             // slither-disable-next-line reentrancy-events
             sendCrossDomainMessage(l1TokenBridge, 0, message);
             // slither-disable-next-line reentrancy-events

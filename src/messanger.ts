@@ -12,14 +12,6 @@ const l2Provider = new ethers.providers.JsonRpcProvider(
 const l1signer = new ethers.Wallet(pk, l1Provider);
 const l2signer = new ethers.Wallet(pk, l2Provider);
 
-// export const createClient = () => {
-//   return new CrossChainMessenger({
-//     l1SignerOrProvider: l1signer,
-//     l2SignerOrProvider: l2signer,
-//     l1ChainId: 5,
-//     l2ChainId: 420,
-//   });
-// };
 export const crossChainMessenger = new CrossChainMessenger({
   l1SignerOrProvider: l1signer,
   l2SignerOrProvider: l2signer,

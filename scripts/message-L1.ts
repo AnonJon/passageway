@@ -5,7 +5,6 @@ import l2controllerABI from "../artifacts/contracts/L2Controller.sol/L2Controlle
 
 async function main() {
   const pk = process.env.PRIVATE_KEY as string;
-  const ccm = crossChainMessenger;
   const networkId = await ethers.provider.getNetwork();
   const signer = new ethers.Wallet(pk, ethers.provider);
 

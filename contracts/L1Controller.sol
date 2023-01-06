@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import {ICrossDomainMessenger} from "@eth-optimism/contracts/libraries/bridge/ICrossDomainMessenger.sol";
 
 contract L1Controller {
-    // Taken from https://github.com/ethereum-optimism/optimism/tree/develop/packages/contracts/deployments/goerli#layer-1-contracts
     address immutable crossDomainMessengerAddr = 0x5086d1eEF304eb5284A0f6720f79403b4e9bE294;
 
     address public L2Addrress;
