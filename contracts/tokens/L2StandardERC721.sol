@@ -7,11 +7,19 @@ import "../interfaces/IL2StandardERC721.sol";
 contract L2StandardERC721 is IL2StandardERC721, ERC721_Template {
     address public l1Token;
     address public l2Bridge;
+    string public baseURI;
 
-    function initialize(address manager, address connectedToken_, string memory name, string memory symbol) public {
+    function initialize(
+        address manager,
+        address connectedToken_,
+        string memory name,
+        string memory symbol,
+        string memory tokenURI
+    ) public {
         require(l2Bridge == address(0x0) && l1Token == address(0x0), "Token is already initialized");
         l2Bridge = manager;
         l1Token = connectedToken_;
+        baseURI = tokenURI;
 
         // setup meta data
         setupMetaData(name, symbol);
@@ -39,5 +47,9 @@ contract L2StandardERC721 is IL2StandardERC721, ERC721_Template {
     function setupMetaData(string memory _name, string memory _symbol) public {
         require(msg.sender == l2Bridge, "Invalid sender");
         _setupMetaData(_name, _symbol);
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
     }
 }

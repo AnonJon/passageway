@@ -144,14 +144,14 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
     ) external virtual {
         // Check the target token is compliant and
         // verify the deposited token on L1 matches the L2 deposited token representation here
-        (string memory name, string memory symbol) = abi.decode(_data, (string, string));
+        (string memory name, string memory symbol, string memory tokenURI) = abi.decode(_data, (string, string, string));
         address childToken = rootToChildToken[_l1Token];
         if (childToken == address(0x0)) {
             // create a new child token
             bytes32 salt = keccak256(abi.encodePacked(_l1Token));
             childToken = createClone(salt, tokenTemplate);
             rootToChildToken[_l1Token] = childToken;
-            IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol);
+            IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol, tokenURI);
         }
         if (_l1Token == IL2StandardERC721(childToken).l1Token()) {
             // slither-disable-next-line reentrancy-events
