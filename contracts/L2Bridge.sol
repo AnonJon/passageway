@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import {IL1ERC721Bridge} from "./interfaces/IL1ERC721Bridge.sol";
 import {IL2ERC721Bridge} from "./interfaces/IL2ERC721Bridge.sol";
 import {IL2StandardERC721} from "./interfaces/IL2StandardERC721.sol";
+import {Clone} from "./lib/Clone.sol";
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {CrossDomainEnabled} from "@eth-optimism/contracts/libraries/bridge/CrossDomainEnabled.sol";
@@ -12,15 +13,20 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 /**
  * @title L2Bridge
  */
-contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver {
+contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone {
     address public l1TokenBridge;
+    address public tokenTemplate;
+    mapping(address => address) public rootToChildToken;
 
     /**
      * @param _l2CrossDomainMessenger Cross-domain messenger used by this contract.
      * @param _l1TokenBridge Address of the L1 bridge deployed to the main chain.
      */
-    constructor(address _l2CrossDomainMessenger, address _l1TokenBridge) CrossDomainEnabled(_l2CrossDomainMessenger) {
+    constructor(address _l2CrossDomainMessenger, address _l1TokenBridge, address _tokenTemplate)
+        CrossDomainEnabled(_l2CrossDomainMessenger)
+    {
         l1TokenBridge = _l1TokenBridge;
+        tokenTemplate = _tokenTemplate;
     }
 
     /**
@@ -125,6 +131,35 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver {
             sendCrossDomainMessage(l1TokenBridge, 0, message);
             // slither-disable-next-line reentrancy-events
             emit DepositFailed(_l1Token, _l2Token, _from, _to, _tokenId, _data);
+        }
+    }
+
+    function _finalizeDeposit(
+        address _l1Token,
+        address _l2Token,
+        address _from,
+        address _to,
+        uint256 _tokenId,
+        bytes calldata _data
+    ) external virtual {
+        // Check the target token is compliant and
+        // verify the deposited token on L1 matches the L2 deposited token representation here
+        (string memory name, string memory symbol) = abi.decode(_data, (string, string));
+        address childToken = rootToChildToken[_l1Token];
+        if (childToken == address(0x0)) {
+            // create a new child token
+            bytes32 salt = keccak256(abi.encodePacked(_l1Token));
+            childToken = createClone(salt, tokenTemplate);
+            rootToChildToken[_l1Token] = childToken;
+            IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol);
+        }
+        if (_l1Token == IL2StandardERC721(childToken).l1Token()) {
+            // slither-disable-next-line reentrancy-events
+            IL2StandardERC721(childToken).mint(_to, _tokenId);
+            // slither-disable-next-line reentrancy-events
+            emit DepositFinalized(_l1Token, childToken, _from, _to, _tokenId, _data);
+        } else {
+            revert("Token not supported");
         }
     }
 

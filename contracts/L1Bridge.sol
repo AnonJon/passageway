@@ -5,7 +5,6 @@ import {IL1ERC721Bridge} from "./interfaces/IL1ERC721Bridge.sol";
 import {IL2ERC721Bridge} from "./interfaces/IL2ERC721Bridge.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {CrossDomainEnabled} from "@eth-optimism/contracts/libraries/bridge/CrossDomainEnabled.sol";
-import {Lib_PredeployAddresses} from "@eth-optimism/contracts/libraries/constants/Lib_PredeployAddresses.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 

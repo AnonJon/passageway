@@ -30,10 +30,10 @@ interface IL1ERC721Bridge {
     function l2TokenBridge() external returns (address);
 
     /**
-     * @dev deposit an amount of the ERC20 to the caller's balance on L2.
-     * @param _l1Token Address of the L1 ERC20 we are depositing
-     * @param _l2Token Address of the L1 respective L2 ERC20
-     * @param _tokenId Amount of the ERC20 to deposit
+     * @dev deposit an amount of the ERC721 to the caller's balance on L2.
+     * @param _l1Token Address of the L1 ERC721 we are depositing
+     * @param _l2Token Address of the L1 respective L2 ERC721
+     * @param _tokenId Amount of the ERC721 to deposit
      * @param _l2Gas Gas limit required to complete the deposit on L2.
      * @param _data Optional data to forward to L2. This data is provided
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
@@ -43,11 +43,11 @@ interface IL1ERC721Bridge {
         external;
 
     /**
-     * @dev deposit an amount of ERC20 to a recipient's balance on L2.
-     * @param _l1Token Address of the L1 ERC20 we are depositing
-     * @param _l2Token Address of the L1 respective L2 ERC20
+     * @dev deposit an amount of ERC721 to a recipient's balance on L2.
+     * @param _l1Token Address of the L1 ERC721 we are depositing
+     * @param _l2Token Address of the L1 respective L2 ERC721
      * @param _to L2 address to credit the withdrawal to.
-     * @param _tokenId Amount of the ERC20 to deposit.
+     * @param _tokenId Amount of the ERC721 to deposit.
      * @param _l2Gas Gas limit required to complete the deposit on L2.
      * @param _data Optional data to forward to L2. This data is provided
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
@@ -64,14 +64,14 @@ interface IL1ERC721Bridge {
 
     /**
      * @dev Complete a withdrawal from L2 to L1, and credit funds to the recipient's balance of the
-     * L1 ERC20 token.
+     * L1 ERC721 token.
      * This call will fail if the initialized withdrawal from L2 has not been finalized.
      *
      * @param _l1Token Address of L1 token to finalizeWithdrawal for.
      * @param _l2Token Address of L2 token where withdrawal was initiated.
      * @param _from L2 address initiating the transfer.
      * @param _to L1 address to credit the withdrawal to.
-     * @param _tokenId Amount of the ERC20 to deposit.
+     * @param _tokenId Amount of the ERC721 to deposit.
      * @param _data Data provided by the sender on L2. This data is provided
      *   solely as a convenience for external contracts. Aside from enforcing a maximum
      *   length, these contracts provide no guarantees about its content.
