@@ -5,6 +5,10 @@ import { ethers, network } from "hardhat";
 import { deploy } from "./utils/helpers";
 import config from "../config/network.config.json";
 import { any } from "hardhat/internal/core/params/argumentTypes";
+import L2StandardToken from "../artifacts/contracts/tokens/L2StandardERC721.sol/L2StandardERC721.json";
+
+const pk = process.env.PRIVATE_KEY as string;
+const signer = new ethers.Wallet(pk, ethers.provider);
 
 describe("L2 Bridge Tests", function () {
   let owner: any,
@@ -22,7 +26,6 @@ describe("L2 Bridge Tests", function () {
     l2StandardERC721 = await deploy("L2StandardERC721");
     l1Messenger = await deploy("L1CDMMock");
     nftL1 = await deploy("NFT", ["Cool NFT's", "CNFT"]);
-    nftL2 = await deploy("NFT", ["Cool NFT's", "CNFT"]);
     l1Bridge = await deploy("L1Bridge");
     l2Messenger = await deploy("L2CDMMock", [l1Bridge.address]);
     l2Bridge = await deploy("L2Bridge", [
@@ -39,14 +42,24 @@ describe("L2 Bridge Tests", function () {
 
   describe("deposit", function () {
     it("bridge nft into L2 bridge without mapping", async () => {
-      await nftL2.setApprovalForAll(l2Bridge.address, true);
+      const abi = ethers.utils.defaultAbiCoder;
+      const name = "NFT WORLD";
+      const symbol = "NFTW";
+      const uri = "https://google.com/0";
+      const data = abi.encode(
+        ["string", "string", "string"],
+        [name, symbol, uri]
+      );
       await l2Bridge._finalizeDeposit(
-        nftL2.address,
+        nftL1.address,
         owner.address,
         owner.address,
         0,
-        "0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000094e465420574f524c44000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044e46545700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f7777772e676f6f676c652e636f6d2f0000000000000000000000000000000000"
+        data
       );
+      const l2tokenAddress = await l2Bridge.tokenMapping(nftL1.address);
+      nftL2 = new ethers.Contract(l2tokenAddress, L2StandardToken.abi, signer);
+      assert((await nftL2.tokenURI(0)) == uri);
       assert((await nftL2.ownerOf(0)) == owner.address);
     });
   });

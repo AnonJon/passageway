@@ -16,7 +16,7 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone {
     address public l1TokenBridge;
     address public tokenTemplate;
-    mapping(address => address) public rootToChildToken;
+    mapping(address => address) public tokenMapping;
 
     /**
      * @param _l2CrossDomainMessenger Cross-domain messenger used by this contract.
@@ -94,12 +94,12 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         onlyFromCrossDomainAccount(l1TokenBridge)
     {
         (string memory name, string memory symbol, string memory tokenURI) = abi.decode(_data, (string, string, string));
-        address childToken = rootToChildToken[_l1Token];
+        address childToken = tokenMapping[_l1Token];
         if (childToken == address(0x0)) {
             // create a new child token
             bytes32 salt = keccak256(abi.encodePacked(_l1Token));
             childToken = createClone(salt, tokenTemplate);
-            rootToChildToken[_l1Token] = childToken;
+            tokenMapping[_l1Token] = childToken;
             IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol);
         }
         if (_l1Token == IL2StandardERC721(childToken).l1Token()) {
@@ -129,12 +129,12 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         virtual
     {
         (string memory name, string memory symbol, string memory tokenURI) = abi.decode(_data, (string, string, string));
-        address childToken = rootToChildToken[_l1Token];
+        address childToken = tokenMapping[_l1Token];
         if (childToken == address(0x0)) {
             // create a new child token
             bytes32 salt = keccak256(abi.encodePacked(_l1Token));
             childToken = createClone(salt, tokenTemplate);
-            rootToChildToken[_l1Token] = childToken;
+            tokenMapping[_l1Token] = childToken;
             IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol);
         }
         if (_l1Token == IL2StandardERC721(childToken).l1Token()) {

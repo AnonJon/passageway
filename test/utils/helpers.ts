@@ -6,6 +6,16 @@ export const deploy = async (contractName: string, args: any[] = []) => {
   return Contract.deploy(...args);
 };
 
+export const deployBySigner = async (
+  contractName: string,
+  bytecode: string,
+  signer: any,
+  args: any[] = []
+) => {
+  const Contract = new ethers.ContractFactory(contractName, bytecode, signer);
+  return Contract.deploy(...args);
+};
+
 export const verify = async (network: string, ...args: any) => {
   let s = "";
   for (let arg of args) {

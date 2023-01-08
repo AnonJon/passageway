@@ -6,6 +6,15 @@ test-contracts:
 deploy-base:
 	npx hardhat run --network ${NETWORK_OPTIMISM_GOERLI} scripts/deploy-base.ts
 
+deploy-template:
+	npx hardhat run --network ${NETWORK_OPTIMISM_GOERLI} scripts/tokens/L2StandardERC721.ts
+
+deploy-bridge-l1:
+	npx hardhat run --network ${NETWORK_GOERLI} scripts/ERC721/deploy-bridge-l1.ts
+
+deploy-bridge-l2:
+	npx hardhat run --network ${NETWORK_OPTIMISM_GOERLI} scripts/ERC721/deploy-bridge-l2.ts
+
 deploy-controller-l1:
 	npx hardhat run --network ${NETWORK_GOERLI} scripts/deploy-controller.ts
 
