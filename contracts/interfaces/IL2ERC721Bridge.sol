@@ -23,14 +23,7 @@ interface IL2ERC721Bridge {
         bytes _data
     );
 
-    event DepositFailed(
-        address indexed _l1Token,
-        address indexed _l2Token,
-        address indexed _from,
-        address _to,
-        uint256 _tokenId,
-        bytes _data
-    );
+    event DepositFailed(address indexed _l1Token, address indexed _from, address _to, uint256 _tokenId, bytes _data);
 
     /**
      * @dev get the address of the corresponding L1 bridge contract.
@@ -67,7 +60,6 @@ interface IL2ERC721Bridge {
      * L2 token. This call will fail if it did not originate from a corresponding deposit in
      * L1StandardTokenBridge.
      * @param _l1Token Address for the l1 token this is called with
-     * @param _l2Token Address for the l2 token this is called with
      * @param _from Account to pull the deposit from on L2.
      * @param _to Address to receive the withdrawal at
      * @param _tokenId Token ID to withdraw
@@ -75,12 +67,6 @@ interface IL2ERC721Bridge {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function finalizeDeposit(
-        address _l1Token,
-        address _l2Token,
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes calldata _data
-    ) external;
+    function finalizeDeposit(address _l1Token, address _from, address _to, uint256 _tokenId, bytes calldata _data)
+        external;
 }

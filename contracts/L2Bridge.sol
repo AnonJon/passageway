@@ -88,39 +88,29 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
     /**
      * @inheritdoc IL2ERC721Bridge
      */
-    function finalizeDeposit(
-        address _l1Token,
-        address _l2Token,
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes calldata _data
-    ) external virtual onlyFromCrossDomainAccount(l1TokenBridge) {
-        // Check the target token is compliant and
-        // verify the deposited token on L1 matches the L2 deposited token representation here
-        if (
-            ERC165Checker
-                // slither-disable-next-line reentrancy-events
-                .supportsInterface(_l2Token, type(IL2StandardERC721).interfaceId)
-                && _l1Token == IL2StandardERC721(_l2Token).l1Token()
-        ) {
+    function finalizeDeposit(address _l1Token, address _from, address _to, uint256 _tokenId, bytes calldata _data)
+        external
+        virtual
+        onlyFromCrossDomainAccount(l1TokenBridge)
+    {
+        (string memory name, string memory symbol, string memory tokenURI) = abi.decode(_data, (string, string, string));
+        address childToken = rootToChildToken[_l1Token];
+        if (childToken == address(0x0)) {
+            // create a new child token
+            bytes32 salt = keccak256(abi.encodePacked(_l1Token));
+            childToken = createClone(salt, tokenTemplate);
+            rootToChildToken[_l1Token] = childToken;
+            IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol);
+        }
+        if (_l1Token == IL2StandardERC721(childToken).l1Token()) {
             // slither-disable-next-line reentrancy-events
-            IL2StandardERC721(_l2Token).mint(_to, _tokenId);
+            IL2StandardERC721(childToken).mint(_to, _tokenId, tokenURI);
             // slither-disable-next-line reentrancy-events
-            emit DepositFinalized(_l1Token, _l2Token, _from, _to, _tokenId, _data);
+            emit DepositFinalized(_l1Token, childToken, _from, _to, _tokenId, _data);
         } else {
-            // Either the L2 token which is being deposited-into disagrees about the correct address
-            // of its L1 token, or does not support the correct interface.
-            // This should only happen if there is a  malicious L2 token, or if a user somehow
-            // specified the wrong L2 token address to deposit into.
-            // In either case, we stop the process here and construct a withdrawal
-            // message so that users can get their funds out in some cases.
-            // There is no way to prevent malicious token contracts altogether, but this does limit
-            // user error and mitigate some forms of malicious contract behavior.
             bytes memory message = abi.encodeWithSelector(
                 IL1ERC721Bridge.finalizeERC721Withdrawal.selector,
                 _l1Token,
-                _l2Token,
                 _to, // switched the _to and _from here to bounce back the deposit to the sender
                 _from,
                 _tokenId,
@@ -130,20 +120,14 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
             // slither-disable-next-line reentrancy-events
             sendCrossDomainMessage(l1TokenBridge, 0, message);
             // slither-disable-next-line reentrancy-events
-            emit DepositFailed(_l1Token, _l2Token, _from, _to, _tokenId, _data);
+            emit DepositFailed(_l1Token, _from, _to, _tokenId, _data);
         }
     }
 
-    function _finalizeDeposit(
-        address _l1Token,
-        address _l2Token,
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes calldata _data
-    ) external virtual {
-        // Check the target token is compliant and
-        // verify the deposited token on L1 matches the L2 deposited token representation here
+    function _finalizeDeposit(address _l1Token, address _from, address _to, uint256 _tokenId, bytes calldata _data)
+        external
+        virtual
+    {
         (string memory name, string memory symbol, string memory tokenURI) = abi.decode(_data, (string, string, string));
         address childToken = rootToChildToken[_l1Token];
         if (childToken == address(0x0)) {
@@ -151,15 +135,27 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
             bytes32 salt = keccak256(abi.encodePacked(_l1Token));
             childToken = createClone(salt, tokenTemplate);
             rootToChildToken[_l1Token] = childToken;
-            IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol, tokenURI);
+            IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol);
         }
         if (_l1Token == IL2StandardERC721(childToken).l1Token()) {
             // slither-disable-next-line reentrancy-events
-            IL2StandardERC721(childToken).mint(_to, _tokenId);
+            IL2StandardERC721(childToken).mint(_to, _tokenId, tokenURI);
             // slither-disable-next-line reentrancy-events
             emit DepositFinalized(_l1Token, childToken, _from, _to, _tokenId, _data);
         } else {
-            revert("Token not supported");
+            bytes memory message = abi.encodeWithSelector(
+                IL1ERC721Bridge.finalizeERC721Withdrawal.selector,
+                _l1Token,
+                _to, // switched the _to and _from here to bounce back the deposit to the sender
+                _from,
+                _tokenId,
+                _data
+            );
+
+            // slither-disable-next-line reentrancy-events
+            sendCrossDomainMessage(l1TokenBridge, 0, message);
+            // slither-disable-next-line reentrancy-events
+            emit DepositFailed(_l1Token, _from, _to, _tokenId, _data);
         }
     }
 

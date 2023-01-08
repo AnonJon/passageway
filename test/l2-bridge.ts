@@ -30,14 +30,17 @@ describe("L2 Bridge Tests", function () {
       l2Messenger.address,
       l2StandardERC721.address,
     ]);
-    await l1Bridge.initialize(l2Messenger.address, l2Bridge.address);
+    await l1Bridge.initialize(
+      l2Messenger.address,
+      l2Bridge.address,
+      l2StandardERC721.address
+    );
   });
 
   describe("deposit", function () {
-    it("bridge nft into L2 bridge", async () => {
+    it("bridge nft into L2 bridge without mapping", async () => {
       await nftL2.setApprovalForAll(l2Bridge.address, true);
       await l2Bridge._finalizeDeposit(
-        nftL2.address,
         nftL2.address,
         owner.address,
         owner.address,

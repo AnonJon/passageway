@@ -12,4 +12,8 @@ contract NFT is ERC721 {
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {
         _mint(msg.sender, _tokenIds.current());
     }
+
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://ipfs.io/ipfs/";
+    }
 }

@@ -6,12 +6,7 @@ pragma solidity >0.5.0 <0.9.0;
  */
 interface IL1ERC721Bridge {
     event ERC721DepositInitiated(
-        address indexed _l1Token,
-        address indexed _l2Token,
-        address indexed _from,
-        address _to,
-        uint256 _tokenId,
-        bytes _data
+        address indexed _l1Token, address indexed _from, address _to, uint256 _tokenId, bytes _data
     );
 
     event ERC721WithdrawalFinalized(
@@ -32,20 +27,17 @@ interface IL1ERC721Bridge {
     /**
      * @dev deposit an amount of the ERC721 to the caller's balance on L2.
      * @param _l1Token Address of the L1 ERC721 we are depositing
-     * @param _l2Token Address of the L1 respective L2 ERC721
      * @param _tokenId Amount of the ERC721 to deposit
      * @param _l2Gas Gas limit required to complete the deposit on L2.
      * @param _data Optional data to forward to L2. This data is provided
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function depositERC721(address _l1Token, address _l2Token, uint256 _tokenId, uint32 _l2Gas, bytes calldata _data)
-        external;
+    function depositERC721(address _l1Token, uint256 _tokenId, uint32 _l2Gas, bytes calldata _data) external;
 
     /**
      * @dev deposit an amount of ERC721 to a recipient's balance on L2.
      * @param _l1Token Address of the L1 ERC721 we are depositing
-     * @param _l2Token Address of the L1 respective L2 ERC721
      * @param _to L2 address to credit the withdrawal to.
      * @param _tokenId Amount of the ERC721 to deposit.
      * @param _l2Gas Gas limit required to complete the deposit on L2.
@@ -53,14 +45,8 @@ interface IL1ERC721Bridge {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function depositERC721To(
-        address _l1Token,
-        address _l2Token,
-        address _to,
-        uint256 _tokenId,
-        uint32 _l2Gas,
-        bytes calldata _data
-    ) external;
+    function depositERC721To(address _l1Token, address _to, uint256 _tokenId, uint32 _l2Gas, bytes calldata _data)
+        external;
 
     /**
      * @dev Complete a withdrawal from L2 to L1, and credit funds to the recipient's balance of the
