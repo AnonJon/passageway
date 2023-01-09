@@ -20,7 +20,7 @@ contract L1Bridge is IL1ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
     mapping(address => address) public tokenMapping;
     bytes32 public templateCodeHash;
 
-    // This contract lives behind a proxy, so the constructor parameters will go unused.
+    // TODO: create proxy logic
     constructor() CrossDomainEnabled(address(0)) {}
 
     /**
@@ -46,11 +46,6 @@ contract L1Bridge is IL1ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         _;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can call this function.");
-        _;
-    }
-
     function depositERC721(address _l1Token, uint256 _tokenId, uint32 _l2Gas, bytes calldata _data)
         external
         virtual
@@ -68,7 +63,7 @@ contract L1Bridge is IL1ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
 
     /**
      * @dev Performs the logic for deposits by informing the L2 Deposited Token
-     * contract of the deposit and calling a handler to lock the L1 funds. (e.g. transferFrom)
+     * contract of the deposit and calling a handler to lock the L1 funds.
      *
      * @param _l1Token Address of the L1 ERC721 we are depositing
      * @param _from Account to pull the deposit from on L1
@@ -96,13 +91,10 @@ contract L1Bridge is IL1ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
             tokenMapping[_l1Token] = l2Token;
         }
         bytes memory tokenData = abi.encode(name, symbol, baseURI);
-        // When a deposit is initiated on L1, the L1 Bridge transfers the funds to itself for future
-        // withdrawals. The use of safeTransferFrom enables support of "broken tokens" which do not
-        // return a boolean value.
+
         // slither-disable-next-line reentrancy-events, reentrancy-benign
         IERC721(_l1Token).safeTransferFrom(_from, address(this), _tokenId);
 
-        // Construct calldata for _l2Token.finalizeDeposit(_to, _amount)
         bytes memory message =
             abi.encodeWithSelector(IL2ERC721Bridge.finalizeDeposit.selector, _l1Token, _from, _to, _tokenId, tokenData);
 
@@ -121,18 +113,11 @@ contract L1Bridge is IL1ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         uint256 _tokenId,
         bytes calldata _data
     ) external onlyFromCrossDomainAccount(l2TokenBridge) {
-        // When a withdrawal is finalized on L1, the L1 Bridge transfers the funds to the withdrawer
         // slither-disable-next-line reentrancy-events
         IERC721(_l1Token).safeTransferFrom(_from, _to, _tokenId);
 
         // slither-disable-next-line reentrancy-events
         emit ERC721WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _tokenId, _data);
-    }
-
-    // probably not needed
-    function setL2Bridge(address bridge) external onlyOwner {
-        require(bridge == address(0x0), "L1BRIDGE: L2BRIDGE ALREADY SET");
-        l2TokenBridge = bridge;
     }
 
     function _checkMapping(address token) internal view returns (bool) {

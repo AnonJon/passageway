@@ -53,10 +53,8 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
      * @param _from Account to pull the withdrawal from on L2.
      * @param _to Account to give the withdrawal to on L1.
      * @param _tokenId Token ID to withdraw.
-     * @param _l1Gas Unused, but included for potential forward compatibility considerations.
-     * @param _data Optional data to forward to L1. This data is provided
-     *        solely as a convenience for external contracts. Aside from enforcing a maximum
-     *        length, these contracts provide no guarantees about its content.
+     * @param _l1Gas Gas limit for the L1 transaction.
+     * @param _data Optional data to forward to L1.
      */
     function _initiateWithdrawal(
         address _l2Token,
@@ -69,7 +67,6 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         // slither-disable-next-line reentrancy-events
         IL2StandardERC721(_l2Token).burn(msg.sender, _tokenId);
 
-        // Construct calldata for l1TokenBridge.finalizeERC20Withdrawal(_to, _amount)
         // slither-disable-next-line reentrancy-events
         address l1Token = IL2StandardERC721(_l2Token).l1Token();
         bytes memory message;
@@ -108,13 +105,9 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
             // slither-disable-next-line reentrancy-events
             emit DepositFinalized(_l1Token, l2Token, _from, _to, _tokenId, _data);
         } else {
+            // send token back to L1
             bytes memory message = abi.encodeWithSelector(
-                IL1ERC721Bridge.finalizeERC721Withdrawal.selector,
-                _l1Token,
-                _to, // switched the _to and _from here to bounce back the deposit to the sender
-                _from,
-                _tokenId,
-                _data
+                IL1ERC721Bridge.finalizeERC721Withdrawal.selector, _l1Token, _to, _from, _tokenId, _data
             );
 
             // slither-disable-next-line reentrancy-events
@@ -124,6 +117,7 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         }
     }
 
+    // used for testing
     function _finalizeDeposit(address _l1Token, address _from, address _to, uint256 _tokenId, bytes calldata _data)
         external
         virtual
@@ -144,12 +138,7 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
             emit DepositFinalized(_l1Token, childToken, _from, _to, _tokenId, _data);
         } else {
             bytes memory message = abi.encodeWithSelector(
-                IL1ERC721Bridge.finalizeERC721Withdrawal.selector,
-                _l1Token,
-                _to, // switched the _to and _from here to bounce back the deposit to the sender
-                _from,
-                _tokenId,
-                _data
+                IL1ERC721Bridge.finalizeERC721Withdrawal.selector, _l1Token, _to, _from, _tokenId, _data
             );
 
             // slither-disable-next-line reentrancy-events

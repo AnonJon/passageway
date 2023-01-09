@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
 import { crossChainMessenger, messageStatus } from "../../src/messanger";
 const { exec } = require("node:child_process");
-import config from "../../config/network.config.json";
 
 export const deploy = async (contractName: string, args: any[] = []) => {
   const Contract = await ethers.getContractFactory(contractName);
