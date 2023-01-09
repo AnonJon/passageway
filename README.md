@@ -1,9 +1,9 @@
-# Optimism Bridge
+# Passageway Protocol Contracts
 
-### NFT's
+Multi chain bridge support for ERC721/1155
 
-Building off of the ERC20 bridge logic to create a bridge for ERC721/ERC1155 tokens
+### Supported chains
 
-### Cross Chain Messaging
-
-Scripts to message L1 -> L2 & L2 -> L1
+- Optimism (beta)
+- Arbitrum (in progress)
+- Polygon (beta)
