@@ -26,3 +26,15 @@ message-l1:
 
 message-l2:
 	npx hardhat run --network ${NETWORK_GOERLI} scripts/message-L2.ts
+
+initialize:
+	npx hardhat run --network ${NETWORK_GOERLI} scripts/ERC721/initialize.ts
+
+deposit:
+	npx hardhat run --network ${NETWORK_GOERLI} scripts/ERC721/deposit.ts
+
+withdraw:
+	npx hardhat run --network ${NETWORK_OPTIMISM_GOERLI} scripts/ERC721/withdraw.ts
+
+test-nft:
+	npx hardhat run --network ${NETWORK_GOERLI} scripts/tokens/nft.ts

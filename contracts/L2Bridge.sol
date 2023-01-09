@@ -33,7 +33,7 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
      * @inheritdoc IL2ERC721Bridge
      */
     function withdraw(address _l2Token, uint256 _tokenId, uint32 _l1Gas, bytes calldata _data) external virtual {
-        _initiateWithdrawal(_l2Token, msg.sender, msg.sender, _tokenId, _l1Gas, _data);
+        _initiateWithdrawal(_l2Token, l1TokenBridge, msg.sender, _tokenId, _l1Gas, _data);
     }
 
     /**
@@ -43,7 +43,7 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         external
         virtual
     {
-        _initiateWithdrawal(_l2Token, msg.sender, _to, _tokenId, _l1Gas, _data);
+        _initiateWithdrawal(_l2Token, l1TokenBridge, _to, _tokenId, _l1Gas, _data);
     }
 
     /**
@@ -94,19 +94,19 @@ contract L2Bridge is IL2ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         onlyFromCrossDomainAccount(l1TokenBridge)
     {
         (string memory name, string memory symbol, string memory tokenURI) = abi.decode(_data, (string, string, string));
-        address childToken = tokenMapping[_l1Token];
-        if (childToken == address(0x0)) {
+        address l2Token = tokenMapping[_l1Token];
+        if (l2Token == address(0x0)) {
             // create a new child token
             bytes32 salt = keccak256(abi.encodePacked(_l1Token));
-            childToken = createClone(salt, tokenTemplate);
-            tokenMapping[_l1Token] = childToken;
-            IL2StandardERC721(childToken).initialize(address(this), _l1Token, name, symbol);
+            l2Token = createClone(salt, tokenTemplate);
+            tokenMapping[_l1Token] = l2Token;
+            IL2StandardERC721(l2Token).initialize(address(this), _l1Token, name, symbol);
         }
-        if (_l1Token == IL2StandardERC721(childToken).l1Token()) {
+        if (_l1Token == IL2StandardERC721(l2Token).l1Token()) {
             // slither-disable-next-line reentrancy-events
-            IL2StandardERC721(childToken).mint(_to, _tokenId, tokenURI);
+            IL2StandardERC721(l2Token).mint(_to, _tokenId, tokenURI);
             // slither-disable-next-line reentrancy-events
-            emit DepositFinalized(_l1Token, childToken, _from, _to, _tokenId, _data);
+            emit DepositFinalized(_l1Token, l2Token, _from, _to, _tokenId, _data);
         } else {
             bytes memory message = abi.encodeWithSelector(
                 IL1ERC721Bridge.finalizeERC721Withdrawal.selector,

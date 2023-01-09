@@ -13,6 +13,6 @@ contract NFT is ERC721URIStorage {
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {
         uint256 newTokenId = _tokenIds.current();
         _mint(msg.sender, newTokenId);
-        _setTokenURI(_tokenIds.current(), string(abi.encodePacked("http://www.google.com/", newTokenId)));
+        _setTokenURI(_tokenIds.current(), string(abi.encodePacked("https://metadata.froggyfriendsnft.com/154")));
     }
 }

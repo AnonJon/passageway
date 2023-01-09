@@ -15,7 +15,6 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
  */
 contract L1Bridge is IL1ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone {
     address public l2TokenBridge;
-    address public l2BridgeAddress;
     address owner;
     // L1 token address => L2 token address
     mapping(address => address) public tokenMapping;
@@ -93,7 +92,7 @@ contract L1Bridge is IL1ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         if (!_checkMapping(_l1Token)) {
             // compute child token address before deployment
             bytes32 salt = keccak256(abi.encodePacked(token));
-            address l2Token = computedCreate2Address(salt, templateCodeHash, l2BridgeAddress);
+            address l2Token = computedCreate2Address(salt, templateCodeHash, l2TokenBridge);
             tokenMapping[_l1Token] = l2Token;
         }
         bytes memory tokenData = abi.encode(name, symbol, baseURI);
@@ -130,9 +129,10 @@ contract L1Bridge is IL1ERC721Bridge, CrossDomainEnabled, IERC721Receiver, Clone
         emit ERC721WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _tokenId, _data);
     }
 
+    // probably not needed
     function setL2Bridge(address bridge) external onlyOwner {
         require(bridge == address(0x0), "L1BRIDGE: L2BRIDGE ALREADY SET");
-        l2BridgeAddress = bridge;
+        l2TokenBridge = bridge;
     }
 
     function _checkMapping(address token) internal view returns (bool) {

@@ -44,4 +44,11 @@ describe("L1 Bridge Tests", function () {
       assert((await nft.ownerOf(0)) == l1Bridge.address);
     });
   });
+  describe("withdraw", function () {
+    it("withdraw nft from L1 bridge", async () => {
+      await nft.setApprovalForAll(l1Bridge.address, true);
+      await l1Bridge.depositERC721(nft.address, 0, 10000000, "0x00");
+      assert((await nft.ownerOf(0)) == l1Bridge.address);
+    });
+  });
 });

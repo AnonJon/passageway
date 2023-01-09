@@ -1,5 +1,7 @@
 import { ethers } from "hardhat";
+import { crossChainMessenger, messageStatus } from "../../src/messanger";
 const { exec } = require("node:child_process");
+import config from "../../config/network.config.json";
 
 export const deploy = async (contractName: string, args: any[] = []) => {
   const Contract = await ethers.getContractFactory(contractName);
@@ -33,4 +35,25 @@ export const verify = async (network: string, ...args: any) => {
     }
   );
   console.log("Verifying contract on etherscan...");
+};
+
+export const finalizeMessage = async (hash: string) => {
+  console.log(`Tx: ${hash} is in challenge period`);
+  await crossChainMessenger.waitForMessageStatus(
+    hash,
+    messageStatus.IN_CHALLENGE_PERIOD
+  );
+  console.log(`Tx: ${hash} is waiting for relay`);
+
+  await crossChainMessenger.waitForMessageStatus(
+    hash,
+    messageStatus.READY_FOR_RELAY
+  );
+  console.log(`Tx: ${hash} is ready for relay`);
+
+  await crossChainMessenger.finalizeMessage(hash);
+  console.log(`Tx: ${hash} is waiting for relayed status...`);
+
+  await crossChainMessenger.waitForMessageStatus(hash, messageStatus.RELAYED);
+  console.log(`Tx: ${hash} Message finalized`);
 };
